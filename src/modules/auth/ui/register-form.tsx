@@ -1,4 +1,4 @@
-import { startTransition, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -24,13 +24,22 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 
 import { getSession, registerWithEmail } from '../lib/auth-api'
-import { resolveAuthRedirectTarget } from '../lib/auth-redirect'
+import {
+  buildAuthLoadingPath,
+  resolveAuthRedirectTarget,
+  resolveOAuthCallbackUrl,
+} from '../lib/auth-redirect'
 import { registerSchema } from '../lib/auth-schemas'
+import { GoogleAuthButton } from './google-auth-button'
 
 export function RegisterForm() {
   const location = useLocation()
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const googleCallbackURL = resolveOAuthCallbackUrl(
+    location.state,
+    location.search,
+  )
 
   const form = useForm({
     defaultValues: {
@@ -56,11 +65,13 @@ export function RegisterForm() {
 
         toast.success('Akun berhasil dibuat dan session sudah aktif.')
 
-        startTransition(() => {
-          navigate(resolveAuthRedirectTarget(location.state, location.search), {
-            replace: true,
-          })
-        })
+        navigate(
+          buildAuthLoadingPath(
+            'login',
+            resolveAuthRedirectTarget(location.state, location.search),
+          ),
+          { replace: true },
+        )
       } catch (error) {
         const message = getApiErrorMessage(
           error,
@@ -79,8 +90,8 @@ export function RegisterForm() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Buat akun baru</CardTitle>
           <CardDescription>
-            Backend akan membuat akun sekaligus session aktif, lalu frontend
-            bootstrap user dari endpoint session.
+            Kamu bisa daftar lewat email/password atau langsung lanjut dengan
+            Google di flow session backend yang sama.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -211,6 +222,24 @@ export function RegisterForm() {
                   </Field>
                 )}
               </form.Subscribe>
+
+              <div className="space-y-3">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
+                    <span className="bg-card px-2">atau</span>
+                  </div>
+                </div>
+
+                <GoogleAuthButton
+                  callbackURL={googleCallbackURL}
+                  label="Lanjut dengan Google"
+                  onError={setSubmitError}
+                  onStart={() => setSubmitError(null)}
+                />
+              </div>
             </FieldGroup>
           </form>
         </CardContent>

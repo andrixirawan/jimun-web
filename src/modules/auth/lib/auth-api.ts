@@ -29,6 +29,18 @@ export async function loginWithEmail(payload: LoginValues) {
   return response.data
 }
 
+export async function beginGoogleOAuth(callbackURL: string) {
+  const response = await authClient.signIn.social({
+    provider: 'google',
+    callbackURL,
+    disableRedirect: true,
+  })
+
+  throwIfAuthError(response.error, 'Login dengan Google gagal.')
+
+  return response.data
+}
+
 export async function getSession() {
   const response = await authClient.getSession()
 

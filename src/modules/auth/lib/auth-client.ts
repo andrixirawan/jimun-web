@@ -10,6 +10,7 @@ export const authClient = createAuthClient({
   baseURL: getApiBaseUrl(),
   basePath: AUTH_BASE_PATH,
   fetchOptions: {
+    credentials: 'include',
     headers: {
       [AUTH_CLIENT_TYPE_HEADER]: 'web',
     },

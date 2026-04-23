@@ -11,5 +11,6 @@ export {
 } from './lib/auth-api'
 export type { AuthRedirectState } from './lib/auth-redirect'
 export { DashboardPage } from './pages/dashboard-page'
+export { AuthLoadingPage } from './pages/auth-loading-page'
 export { LoginPage } from './pages/login-page'
 export { RegisterPage } from './pages/register-page'

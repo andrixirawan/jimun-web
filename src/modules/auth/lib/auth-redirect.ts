@@ -2,7 +2,11 @@ export type AuthRedirectState = {
   redirectTo?: string
 }
 
-const AUTH_ROUTE_PATHS = new Set(['/login', '/register'])
+export const AUTH_LOADING_PATH = '/auth/loading'
+const AUTH_ROUTE_PATHS = new Set(['/login', '/register', AUTH_LOADING_PATH])
+const AUTH_LOADING_INTENTS = new Set(['login', 'logout'] as const)
+
+export type AuthLoadingIntent = 'login' | 'logout'
 
 function sanitizeRedirectTarget(value: unknown) {
   if (typeof value !== 'string') {
@@ -20,6 +24,18 @@ function sanitizeRedirectTarget(value: unknown) {
   }
 
   return value
+}
+
+function sanitizeLoadingIntent(value: unknown): AuthLoadingIntent | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  if (AUTH_LOADING_INTENTS.has(value as AuthLoadingIntent)) {
+    return value as AuthLoadingIntent
+  }
+
+  return null
 }
 
 export function getAuthRedirectState(state: unknown, search?: string) {
@@ -72,4 +88,54 @@ export function resolveAuthRedirectTarget(
   }
 
   return fallback
+}
+
+export function resolveOAuthCallbackUrl(
+  state: unknown,
+  search?: string,
+  fallback = '/dashboard',
+) {
+  const redirectTarget = resolveAuthRedirectTarget(state, search, fallback)
+  const authLoadingPath = buildAuthLoadingPath('login', redirectTarget)
+
+  if (typeof window === 'undefined') {
+    return authLoadingPath
+  }
+
+  return new URL(authLoadingPath, window.location.origin).toString()
+}
+
+export function buildAuthLoadingPath(
+  intent: AuthLoadingIntent,
+  nextPath?: string,
+) {
+  const params = new URLSearchParams()
+  const fallbackTarget = intent === 'logout' ? '/login' : '/dashboard'
+
+  params.set('intent', intent)
+  params.set(
+    'next',
+    sanitizeRedirectTarget(nextPath) ?? fallbackTarget,
+  )
+
+  return `${AUTH_LOADING_PATH}?${params.toString()}`
+}
+
+export function resolveAuthLoadingIntent(
+  search?: string,
+  fallback: AuthLoadingIntent = 'login',
+) {
+  if (!search) {
+    return fallback
+  }
+
+  return sanitizeLoadingIntent(new URLSearchParams(search).get('intent')) ?? fallback
+}
+
+export function resolveAuthLoadingTarget(search?: string, fallback = '/dashboard') {
+  if (!search) {
+    return fallback
+  }
+
+  return sanitizeRedirectTarget(new URLSearchParams(search).get('next')) ?? fallback
 }

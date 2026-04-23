@@ -1,4 +1,4 @@
-import { startTransition, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from '@tanstack/react-form'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -25,8 +25,13 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 
 import { getSession, loginWithEmail } from '../lib/auth-api'
+import {
+  buildAuthLoadingPath,
+  resolveAuthRedirectTarget,
+  resolveOAuthCallbackUrl,
+} from '../lib/auth-redirect'
 import { loginSchema } from '../lib/auth-schemas'
-import { resolveAuthRedirectTarget } from '../lib/auth-redirect'
+import { GoogleAuthButton } from './google-auth-button'
 
 export function LoginForm({
   className,
@@ -35,6 +40,10 @@ export function LoginForm({
   const location = useLocation()
   const navigate = useNavigate()
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const googleCallbackURL = resolveOAuthCallbackUrl(
+    location.state,
+    location.search,
+  )
 
   const form = useForm({
     defaultValues: {
@@ -59,11 +68,13 @@ export function LoginForm({
 
         toast.success('Login berhasil.')
 
-        startTransition(() => {
-          navigate(resolveAuthRedirectTarget(location.state, location.search), {
-            replace: true,
-          })
-        })
+        navigate(
+          buildAuthLoadingPath(
+            'login',
+            resolveAuthRedirectTarget(location.state, location.search),
+          ),
+          { replace: true },
+        )
       } catch (error) {
         const message = getApiErrorMessage(
           error,
@@ -82,8 +93,8 @@ export function LoginForm({
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Masuk ke akun kamu</CardTitle>
           <CardDescription>
-            Frontend akan meminta session terbaru dari backend setelah login
-            berhasil.
+            Login email/password dan Google akan berakhir di session backend
+            yang sama.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -184,6 +195,24 @@ export function LoginForm({
                   </Field>
                 )}
               </form.Subscribe>
+
+              <div className="space-y-3">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border" />
+                  </div>
+                  <div className="relative flex justify-center text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
+                    <span className="bg-card px-2">atau</span>
+                  </div>
+                </div>
+
+                <GoogleAuthButton
+                  callbackURL={googleCallbackURL}
+                  label="Masuk dengan Google"
+                  onError={setSubmitError}
+                  onStart={() => setSubmitError(null)}
+                />
+              </div>
             </FieldGroup>
           </form>
         </CardContent>

@@ -11,6 +11,7 @@ import { RegisterRoutePage } from '@/routes/(auth)/register/page'
 import { ProtectedLayout } from '@/routes/(protected)/layout'
 import { DashboardRoutePage } from '@/routes/(protected)/dashboard/page'
 import { PublicLayout } from '@/routes/(public)/layout'
+import { AuthLoadingRoutePage } from '@/routes/(public)/auth-loading/page'
 import { PublicBlogIdRoutePage } from '@/routes/(public)/blog-id/page'
 import { PublicBlogRoutePage } from '@/routes/(public)/blog/page'
 import { PublicNotFoundRoutePage } from '@/routes/(public)/not-found/page'
@@ -66,6 +67,10 @@ const router = createBrowserRouter(
     {
       element: <PublicLayout />,
       children: [
+        {
+          path: '/auth/loading',
+          element: <AuthLoadingRoutePage />,
+        },
         {
           path: '/blog',
           element: <PublicBlogRoutePage />,

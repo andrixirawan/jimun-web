@@ -1,4 +1,4 @@
-import { startTransition, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LogOutIcon, RefreshCcwIcon, ShieldCheckIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -19,6 +19,7 @@ import { Spinner } from '@/components/ui/spinner'
 
 import { useAuthSession } from '../hooks/use-auth-session'
 import { getSession, signOut } from '../lib/auth-api'
+import { buildAuthLoadingPath } from '../lib/auth-redirect'
 
 export function DashboardPage() {
   const navigate = useNavigate()
@@ -66,9 +67,7 @@ export function DashboardPage() {
       )
       setErrorMessage(revokeFailedMessage)
     } finally {
-      startTransition(() => {
-        navigate('/login', { replace: true })
-      })
+      navigate(buildAuthLoadingPath('logout', '/login'), { replace: true })
 
       if (revokeFailedMessage) {
         toast.warning(revokeFailedMessage)
