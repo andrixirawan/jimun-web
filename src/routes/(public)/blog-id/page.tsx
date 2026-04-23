@@ -50,7 +50,7 @@ function DetailSkeleton() {
   )
 }
 
-export function PublicBlogDetailPage() {
+export function PublicBlogIdRoutePage() {
   const { id } = useParams<{ id: string }>()
   const detailQuery = useQuery({
     queryKey: ['public-blog-detail', id],
@@ -71,7 +71,7 @@ export function PublicBlogDetailPage() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(15,118,110,0.14),_transparent_30%),linear-gradient(180deg,_var(--background),_oklch(0.99_0.02_140))]">
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-6 px-6 py-8 lg:px-10">
         <div className="flex items-center justify-between gap-3">
-          <Button render={<Link to="/blogs" />} variant="outline">
+          <Button render={<Link to="/blog" />} variant="outline">
             <ArrowLeftIcon className="size-4" />
             Kembali ke blog
           </Button>

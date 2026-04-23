@@ -11,9 +11,8 @@ import { RegisterRoutePage } from '@/routes/(auth)/register/page'
 import { ProtectedLayout } from '@/routes/(protected)/layout'
 import { DashboardRoutePage } from '@/routes/(protected)/dashboard/page'
 import { PublicLayout } from '@/routes/(public)/layout'
-import { PublicBlogDetailRoutePage } from '@/routes/(public)/blog-detail/page'
-import { PublicBlogsRoutePage } from '@/routes/(public)/blogs/page'
-import { RouteLoader } from '@modules/auth'
+import { PublicBlogIdRoutePage } from '@/routes/(public)/blog-id/page'
+import { PublicBlogRoutePage } from '@/routes/(public)/blog/page'
 import { getSession } from '@modules/auth/lib/auth-api'
 import { resolveAuthRedirectTarget } from '@modules/auth/lib/auth-redirect'
 
@@ -54,7 +53,7 @@ const requireAuthenticatedSessionMiddleware: MiddlewareFunction = async (
 async function resolveDefaultPathLoader() {
   const session = await getSession()
 
-  return redirect(session?.user ? '/dashboard' : '/blogs')
+  return redirect(session?.user ? '/dashboard' : '/blog')
 }
 
 const router = createBrowserRouter(
@@ -67,12 +66,12 @@ const router = createBrowserRouter(
       element: <PublicLayout />,
       children: [
         {
-          path: '/blogs',
-          element: <PublicBlogsRoutePage />,
+          path: '/blog',
+          element: <PublicBlogRoutePage />,
         },
         {
-          path: '/blogs/:id',
-          element: <PublicBlogDetailRoutePage />,
+          path: '/blog/:id',
+          element: <PublicBlogIdRoutePage />,
         },
       ],
     },
@@ -105,13 +104,8 @@ const router = createBrowserRouter(
       loader: resolveDefaultPathLoader,
     },
   ],
-  {
-    future: {
-      v8_middleware: true,
-    },
-  },
 )
 
 export function AppRouter() {
-  return <RouterProvider fallbackElement={<RouteLoader />} router={router} />
+  return <RouterProvider router={router} />
 }

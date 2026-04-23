@@ -1,6 +1,4 @@
-import axios from 'axios'
-
-import { getApiBaseUrl } from '@/lib/api/base-url'
+import { apiClient } from '@/lib/api/http-client'
 
 export type Blog = {
   id: string
@@ -36,26 +34,25 @@ export type BlogPagination = {
 type FetchPublicBlogsParams = {
   page?: number
   perPage?: number
+  search?: string
 }
 
 export async function fetchPublicBlogs(params: FetchPublicBlogsParams = {}) {
   const page = params.page ?? 1
   const perPage = params.perPage ?? 9
-  const baseUrl = getApiBaseUrl()
-  const endpoint = new URL('/api/public/blogs', baseUrl)
-
-  endpoint.searchParams.set('page', String(page))
-  endpoint.searchParams.set('per_page', String(perPage))
-
-  const response = await axios.get<BlogPagination>(endpoint.toString())
+  const response = await apiClient.get<BlogPagination>('/api/public/blogs', {
+    params: {
+      page,
+      per_page: perPage,
+      search: params.search?.trim() || undefined,
+    },
+  })
 
   return response.data
 }
 
 export async function fetchPublicBlogById(id: string) {
-  const baseUrl = getApiBaseUrl()
-  const endpoint = new URL(`/api/public/blogs/${id}`, baseUrl)
-  const response = await axios.get<Blog>(endpoint.toString())
+  const response = await apiClient.get<Blog>(`/api/public/blogs/${id}`)
 
   return response.data
 }
