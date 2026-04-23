@@ -1,0 +1,193 @@
+import { startTransition, useState } from 'react'
+import { useForm } from '@tanstack/react-form'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+
+import { getApiErrorMessage } from '@/lib/api/errors'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Field,
+  FieldContent,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
+
+import { getSession, loginWithEmail } from '../lib/auth-api'
+import { loginSchema } from '../lib/auth-schemas'
+import { resolveAuthRedirectTarget } from '../lib/auth-redirect'
+
+export function LoginForm({
+  className,
+  ...props
+}: React.ComponentProps<'div'>) {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const form = useForm({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+    validators: {
+      onSubmit: loginSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setSubmitError(null)
+
+      try {
+        await loginWithEmail(value)
+        const session = await getSession()
+
+        if (!session?.user) {
+          throw new Error(
+            'Login berhasil, tapi session belum terbaca. Cek konfigurasi cookie/CORS di backend Better Auth.',
+          )
+        }
+
+        toast.success('Login berhasil.')
+
+        startTransition(() => {
+          navigate(resolveAuthRedirectTarget(location.state), {
+            replace: true,
+          })
+        })
+      } catch (error) {
+        const message = getApiErrorMessage(
+          error,
+          'Login gagal. Cek kembali email dan password kamu.',
+        )
+
+        setSubmitError(message)
+        toast.error(message)
+      }
+    },
+  })
+
+  return (
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
+      <Card className="border-border/70 bg-card/95 shadow-xl backdrop-blur">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Masuk ke akun kamu</CardTitle>
+          <CardDescription>
+            Frontend akan meminta session terbaru dari backend setelah login
+            berhasil.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form
+            className="space-y-6"
+            onSubmit={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              void form.handleSubmit()
+            }}
+          >
+            <FieldGroup>
+              {submitError ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Login gagal</AlertTitle>
+                  <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <form.Field
+                name="email"
+                validators={{
+                  onBlur: loginSchema.shape.email,
+                  onSubmit: loginSchema.shape.email,
+                }}
+              >
+                {(field) => (
+                  <Field data-invalid={!field.state.meta.isValid}>
+                    <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="email"
+                        autoComplete="email"
+                        placeholder="nama@email.com"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                      />
+                      {field.state.meta.isTouched ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </FieldContent>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Field
+                name="password"
+                validators={{
+                  onBlur: loginSchema.shape.password,
+                  onSubmit: loginSchema.shape.password,
+                }}
+              >
+                {(field) => (
+                  <Field data-invalid={!field.state.meta.isValid}>
+                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id={field.name}
+                        name={field.name}
+                        type="password"
+                        autoComplete="current-password"
+                        placeholder="Minimal 8 karakter"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(event) =>
+                          field.handleChange(event.target.value)
+                        }
+                      />
+                      {field.state.meta.isTouched ? (
+                        <FieldError errors={field.state.meta.errors} />
+                      ) : null}
+                    </FieldContent>
+                  </Field>
+                )}
+              </form.Field>
+
+              <form.Subscribe
+                selector={(formState) => ({
+                  canSubmit: formState.canSubmit,
+                  isSubmitting: formState.isSubmitting,
+                })}
+              >
+                {({ canSubmit, isSubmitting }) => (
+                  <Field>
+                    <Button
+                      className="w-full"
+                      disabled={!canSubmit || isSubmitting}
+                      type="submit"
+                    >
+                      {isSubmitting ? <Spinner className="size-4" /> : null}
+                      {isSubmitting ? 'Memproses...' : 'Login'}
+                    </Button>
+                  </Field>
+                )}
+              </form.Subscribe>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
