@@ -14,13 +14,15 @@ import {
 
 export function AppRouter() {
   const { isAuthenticated, isPending } = useAuthSession()
+
+  if (isPending) {
+    return <RouteLoader />
+  }
+
   const defaultPath = isAuthenticated ? '/dashboard' : '/blogs'
 
   return (
     <Routes>
-      {isPending ? (
-        <Route path="*" element={<RouteLoader />} />
-      ) : null}
       <Route
         path="/"
         element={<Navigate replace to={defaultPath} />}
