@@ -13,6 +13,7 @@ import { DashboardRoutePage } from '@/routes/(protected)/dashboard/page'
 import { PublicLayout } from '@/routes/(public)/layout'
 import { PublicBlogIdRoutePage } from '@/routes/(public)/blog-id/page'
 import { PublicBlogRoutePage } from '@/routes/(public)/blog/page'
+import { PublicNotFoundRoutePage } from '@/routes/(public)/not-found/page'
 import { getSession } from '@modules/auth/lib/auth-api'
 import { resolveAuthRedirectTarget } from '@modules/auth/lib/auth-redirect'
 
@@ -73,6 +74,10 @@ const router = createBrowserRouter(
           path: '/blog/:id',
           element: <PublicBlogIdRoutePage />,
         },
+        {
+          path: '*',
+          element: <PublicNotFoundRoutePage />,
+        },
       ],
     },
     {
@@ -98,10 +103,6 @@ const router = createBrowserRouter(
           element: <DashboardRoutePage />,
         },
       ],
-    },
-    {
-      path: '*',
-      loader: resolveDefaultPathLoader,
     },
   ],
 )
