@@ -1,62 +1,117 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
-
-import { PublicBlogDetailPage } from '@/pages/public-blog-detail-page'
-import { PublicBlogsPage } from '@/pages/public-blogs-page'
 import {
-  DashboardPage,
-  GuestRoute,
-  LoginPage,
-  ProtectedRoute,
-  RegisterPage,
-  RouteLoader,
-  useAuthSession,
-} from '@modules/auth'
+  createBrowserRouter,
+  redirect,
+  RouterProvider,
+  type MiddlewareFunction,
+} from 'react-router-dom'
 
-export function AppRouter() {
-  const { isAuthenticated, isPending } = useAuthSession()
+import { AuthLayout } from '@/routes/(auth)/layout'
+import { LoginRoutePage } from '@/routes/(auth)/login/page'
+import { RegisterRoutePage } from '@/routes/(auth)/register/page'
+import { ProtectedLayout } from '@/routes/(protected)/layout'
+import { DashboardRoutePage } from '@/routes/(protected)/dashboard/page'
+import { PublicLayout } from '@/routes/(public)/layout'
+import { PublicBlogDetailRoutePage } from '@/routes/(public)/blog-detail/page'
+import { PublicBlogsRoutePage } from '@/routes/(public)/blogs/page'
+import { RouteLoader } from '@modules/auth'
+import { getSession } from '@modules/auth/lib/auth-api'
+import { resolveAuthRedirectTarget } from '@modules/auth/lib/auth-redirect'
 
-  if (isPending) {
-    return <RouteLoader />
+const requireGuestSessionMiddleware: MiddlewareFunction = async (
+  { request },
+  next,
+) => {
+  const session = await getSession()
+
+  if (session?.user) {
+    const requestUrl = new URL(request.url)
+
+    return redirect(
+      resolveAuthRedirectTarget(undefined, requestUrl.search, '/dashboard'),
+    )
   }
 
-  const defaultPath = isAuthenticated ? '/dashboard' : '/blogs'
+  return next()
+}
 
-  return (
-    <Routes>
-      <Route
-        path="/"
-        element={<Navigate replace to={defaultPath} />}
-      />
-      <Route path="/blogs" element={<PublicBlogsPage />} />
-      <Route path="/blogs/:id" element={<PublicBlogDetailPage />} />
-      <Route
-        path="/login"
-        element={
-          <GuestRoute>
-            <LoginPage />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <GuestRoute>
-            <RegisterPage />
-          </GuestRoute>
-        }
-      />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="*"
-        element={<Navigate replace to={defaultPath} />}
-      />
-    </Routes>
-  )
+const requireAuthenticatedSessionMiddleware: MiddlewareFunction = async (
+  { request },
+  next,
+) => {
+  const session = await getSession()
+
+  if (!session?.user) {
+    const requestUrl = new URL(request.url)
+    const redirectTo = `${requestUrl.pathname}${requestUrl.search}${requestUrl.hash}`
+    const loginSearch = new URLSearchParams({ redirectTo }).toString()
+
+    return redirect(`/login?${loginSearch}`)
+  }
+
+  return next()
+}
+
+async function resolveDefaultPathLoader() {
+  const session = await getSession()
+
+  return redirect(session?.user ? '/dashboard' : '/blogs')
+}
+
+const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      loader: resolveDefaultPathLoader,
+    },
+    {
+      element: <PublicLayout />,
+      children: [
+        {
+          path: '/blogs',
+          element: <PublicBlogsRoutePage />,
+        },
+        {
+          path: '/blogs/:id',
+          element: <PublicBlogDetailRoutePage />,
+        },
+      ],
+    },
+    {
+      element: <AuthLayout />,
+      middleware: [requireGuestSessionMiddleware],
+      children: [
+        {
+          path: '/login',
+          element: <LoginRoutePage />,
+        },
+        {
+          path: '/register',
+          element: <RegisterRoutePage />,
+        },
+      ],
+    },
+    {
+      element: <ProtectedLayout />,
+      middleware: [requireAuthenticatedSessionMiddleware],
+      children: [
+        {
+          path: '/dashboard',
+          element: <DashboardRoutePage />,
+        },
+      ],
+    },
+    {
+      path: '*',
+      loader: resolveDefaultPathLoader,
+    },
+  ],
+  {
+    future: {
+      v8_middleware: true,
+    },
+  },
+)
+
+export function AppRouter() {
+  return <RouterProvider fallbackElement={<RouteLoader />} router={router} />
 }

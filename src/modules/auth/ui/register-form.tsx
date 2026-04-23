@@ -57,7 +57,7 @@ export function RegisterForm() {
         toast.success('Akun berhasil dibuat dan session sudah aktif.')
 
         startTransition(() => {
-          navigate(resolveAuthRedirectTarget(location.state), {
+          navigate(resolveAuthRedirectTarget(location.state, location.search), {
             replace: true,
           })
         })

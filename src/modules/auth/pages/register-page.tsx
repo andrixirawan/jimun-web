@@ -11,7 +11,7 @@ export function RegisterPage() {
     <AuthShell
       alternateHref="/login"
       alternateLabel="Masuk ke akun"
-      alternateState={getAuthRedirectState(location.state)}
+      alternateState={getAuthRedirectState(location.state, location.search)}
       alternateText="Sudah punya akun?"
       description="Flow register mengikuti backend Better Auth: akun dibuat, session aktif, lalu frontend bootstrap user dari endpoint session."
       eyebrow="Register"

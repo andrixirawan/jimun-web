@@ -22,21 +22,54 @@ function sanitizeRedirectTarget(value: unknown) {
   return value
 }
 
-export function getAuthRedirectState(state: unknown) {
-  if (!state || typeof state !== 'object') {
-    return undefined
+export function getAuthRedirectState(state: unknown, search?: string) {
+  const redirectToFromState = getAuthRedirectStateFromObject(state)
+
+  if (redirectToFromState) {
+    return { redirectTo: redirectToFromState }
   }
 
-  const redirectTo = sanitizeRedirectTarget(
-    (state as AuthRedirectState).redirectTo,
-  )
+  if (search) {
+    const redirectToFromSearch = sanitizeRedirectTarget(
+      new URLSearchParams(search).get('redirectTo'),
+    )
 
-  return redirectTo ? { redirectTo } : undefined
+    if (redirectToFromSearch) {
+      return { redirectTo: redirectToFromSearch }
+    }
+  }
+
+  return undefined
+}
+
+function getAuthRedirectStateFromObject(state: unknown) {
+  if (!state || typeof state !== 'object') {
+    return null
+  }
+
+  return sanitizeRedirectTarget((state as AuthRedirectState).redirectTo)
 }
 
 export function resolveAuthRedirectTarget(
   state: unknown,
+  search?: string,
   fallback = '/dashboard',
 ) {
-  return getAuthRedirectState(state)?.redirectTo ?? fallback
+  const redirectToFromState = getAuthRedirectStateFromObject(state)
+
+  if (redirectToFromState) {
+    return redirectToFromState
+  }
+
+  if (search) {
+    const redirectToFromSearch = sanitizeRedirectTarget(
+      new URLSearchParams(search).get('redirectTo'),
+    )
+
+    if (redirectToFromSearch) {
+      return redirectToFromSearch
+    }
+  }
+
+  return fallback
 }

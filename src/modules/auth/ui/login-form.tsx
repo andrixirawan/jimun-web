@@ -60,7 +60,7 @@ export function LoginForm({
         toast.success('Login berhasil.')
 
         startTransition(() => {
-          navigate(resolveAuthRedirectTarget(location.state), {
+          navigate(resolveAuthRedirectTarget(location.state, location.search), {
             replace: true,
           })
         })

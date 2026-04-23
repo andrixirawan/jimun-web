@@ -11,7 +11,7 @@ export function LoginPage() {
     <AuthShell
       alternateHref="/register"
       alternateLabel="Buat akun"
-      alternateState={getAuthRedirectState(location.state)}
+      alternateState={getAuthRedirectState(location.state, location.search)}
       alternateText="Belum punya akun?"
       description="Session akan dikelola oleh backend Better Auth. Setelah login sukses, app langsung membaca source of truth dari get-session."
       eyebrow="Login"
